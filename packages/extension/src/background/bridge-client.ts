@@ -128,10 +128,15 @@ export class BridgeClient {
 
   private async getOrCreateInstanceId(): Promise<string> {
     return new Promise((resolve) => {
-      chrome.storage.session.get({ instance_id: '' }, (items) => {
+      // Use storage.local so the instanceId persists across service worker
+      // restarts, Chrome restarts, and extension updates. storage.session
+      // is cleared when the browser session ends or the extension is reloaded,
+      // causing a new instanceId to be generated on every SW restart and
+      // leaving stale zombie connections on the server.
+      chrome.storage.local.get({ instance_id: '' }, (items) => {
         const err = chrome.runtime.lastError
         if (err) {
-          console.warn('[BridgeClient] storage.session.get error:', err.message)
+          console.warn('[BridgeClient] storage.local.get error:', err.message)
           resolve(crypto.randomUUID())
           return
         }
@@ -141,7 +146,7 @@ export class BridgeClient {
           return
         }
         const newId = crypto.randomUUID()
-        chrome.storage.session.set({ instance_id: newId }, () => {
+        chrome.storage.local.set({ instance_id: newId }, () => {
           resolve(newId)
         })
       })

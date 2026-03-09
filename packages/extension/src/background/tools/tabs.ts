@@ -166,7 +166,7 @@ function buildTabListText(
  */
 async function getInstanceId(): Promise<string> {
   return new Promise((resolve) => {
-    chrome.storage.session.get({ instance_id: '' }, (items) => {
+    chrome.storage.local.get({ instance_id: '' }, (items) => {
       void chrome.runtime.lastError
       resolve(typeof items['instance_id'] === 'string' ? items['instance_id'] : '')
     })
