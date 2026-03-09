@@ -1,0 +1,27 @@
+{
+  "name": "@openbrowsermcp/server",
+  "version": "0.0.1",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:e2e": "bash scripts/e2e-test.sh",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@openbrowsermcp/shared": "workspace:*",
+    "express": "^4.21.0",
+    "ws": "^8.18.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.5.13",
+    "typescript": "*",
+    "vitest": "^2.0.0"
+  }
+}

@@ -1,0 +1,7 @@
+node_modules/
+dist/
+*.crx:Zone.Identifier
+.env
+.env.local
+# Claude Code project-level mcp configuration file
+.mcp.json
