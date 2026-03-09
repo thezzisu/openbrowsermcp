@@ -78,6 +78,18 @@ export class ExtensionRegistry extends EventEmitter {
       this.emit('disconnected', info.instanceId)
     }
 
+    // Evict any stale connections from the same extensionId (same Chrome
+    // install) with a different instanceId. This happens when the service
+    // worker restarts and generates a new instanceId while the old TCP
+    // connection is still alive (passing heartbeat pings).
+    for (const [oldInstanceId, conn] of this.connections) {
+      if (conn.extensionId === info.extensionId && oldInstanceId !== info.instanceId) {
+        this.connections.delete(oldInstanceId)
+        conn.ws.terminate()
+        this.emit('disconnected', oldInstanceId)
+      }
+    }
+
     const connection: ExtensionConnection = { ws, ...info }
     this.connections.set(info.instanceId, connection)
     // Treat a freshly connected socket as alive

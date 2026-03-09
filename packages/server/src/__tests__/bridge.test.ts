@@ -39,7 +39,7 @@ describe('ExtensionRegistry', () => {
     expect(registry.count()).toBe(1)
   })
 
-  it('getAll returns all connected extensions', () => {
+  it('getAll returns all connected extensions from different extensionIds', () => {
     const ws1 = makeMockWs()
     const ws2 = makeMockWs()
     registry.add(ws1 as unknown as import('ws').WebSocket, {
@@ -48,7 +48,7 @@ describe('ExtensionRegistry', () => {
       connectedAt: new Date().toISOString(),
     })
     registry.add(ws2 as unknown as import('ws').WebSocket, {
-      extensionId: 'ext-1',
+      extensionId: 'ext-2',
       instanceId: 'inst-2',
       connectedAt: new Date().toISOString(),
     })
@@ -56,6 +56,32 @@ describe('ExtensionRegistry', () => {
     expect(all).toHaveLength(2)
     expect(all.map((c) => c.instanceId)).toContain('inst-1')
     expect(all.map((c) => c.instanceId)).toContain('inst-2')
+  })
+
+  it('same extensionId with new instanceId evicts old connection', () => {
+    const ws1 = makeMockWs()
+    const ws2 = makeMockWs()
+    const disconnectedIds: string[] = []
+    registry.on('disconnected', (id: string) => disconnectedIds.push(id))
+
+    registry.add(ws1 as unknown as import('ws').WebSocket, {
+      extensionId: 'ext-1',
+      instanceId: 'inst-old',
+      connectedAt: new Date().toISOString(),
+    })
+    registry.add(ws2 as unknown as import('ws').WebSocket, {
+      extensionId: 'ext-1',
+      instanceId: 'inst-new',
+      connectedAt: new Date().toISOString(),
+    })
+
+    // Old connection should be terminated
+    expect(ws1.terminate).toHaveBeenCalledTimes(1)
+    expect(disconnectedIds).toContain('inst-old')
+    // Only one connection remains
+    expect(registry.count()).toBe(1)
+    expect(registry.getById('inst-new')).toBeDefined()
+    expect(registry.getById('inst-old')).toBeUndefined()
   })
 
   it('getById returns the correct connection by instanceId', () => {

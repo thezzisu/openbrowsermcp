@@ -150,8 +150,11 @@ export class Router {
       return all.find((c) => c.instanceId === browserId) ?? null
     }
 
-    // Default: first connected extension
-    return all[0]
+    // Default: most recently connected extension (last in insertion order).
+    // The latest connection is the active one; earlier entries may be stale
+    // sockets whose service worker restarted but whose TCP connection is
+    // still alive (passing heartbeat pings at the TCP level).
+    return all[all.length - 1]
   }
 
   private clearPending(requestId: string): void {
