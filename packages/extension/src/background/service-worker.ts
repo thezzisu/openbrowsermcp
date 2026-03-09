@@ -92,17 +92,21 @@ bridgeClient.onMessage(async (msg) => {
 
   const { requestId, tool, args, tabId } = msg
 
-  // Determine the active tab if no tabId was specified.
-  const resolvedTabId = await resolveTabId(tabId)
-
-  // Show the visual indicator before executing the tool.
-  // Cancel any pending hide timer for this tab so the border stays visible.
-  cancelHideIndicatorForTab(resolvedTabId)
-  activeIndicatorTabs.add(resolvedTabId)
   pendingRequestId = requestId
-  sendIndicatorMessage(resolvedTabId, 'INDICATOR_SHOW')
+  let resolvedTabId: number | undefined
 
   try {
+    // Determine the active tab if no tabId was specified.
+    // This can fail if no Chrome window is focused — keep it inside try so
+    // the error is returned as tool_error instead of causing a 30s timeout.
+    resolvedTabId = await resolveTabId(tabId)
+
+    // Show the visual indicator before executing the tool.
+    // Cancel any pending hide timer for this tab so the border stays visible.
+    cancelHideIndicatorForTab(resolvedTabId)
+    activeIndicatorTabs.add(resolvedTabId)
+    sendIndicatorMessage(resolvedTabId, 'INDICATOR_SHOW')
+
     const result = await dispatchTool(tool, resolvedTabId, args)
 
     // Check if the tool was stopped by the user
@@ -128,7 +132,9 @@ bridgeClient.onMessage(async (msg) => {
     // on the same tab don't cause the border to flicker.
     if (pendingRequestId === requestId) {
       pendingRequestId = null
-      scheduleHideIndicator(resolvedTabId)
+      if (resolvedTabId !== undefined) {
+        scheduleHideIndicator(resolvedTabId)
+      }
     }
   }
 })
